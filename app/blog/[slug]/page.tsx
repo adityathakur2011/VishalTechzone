@@ -1,3 +1,26 @@
+// Required for static export with dynamic routes
+// Provide slugs for static export. This fetch tries to request only slugs
+// and uses a no-store fetch so Next won't attempt to cache large payloads
+// during build time.
+export async function generateStaticParams() {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  try {
+    // Ask the API to return only slugs if supported (fields=slug). If your API
+    // doesn't support `fields`, it should still work but return a larger payload.
+    const res = await fetch(`${apiUrl}/api/v1/blogs?limit=1000&fields=slug`, { cache: 'no-store' });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const blogs = data?.data?.blogs || data?.data || [];
+    if (!Array.isArray(blogs)) return [];
+    return blogs.map((b: any) => ({ slug: String(b.slug) }));
+  } catch (err) {
+    // If slug fetching fails during build, return an empty array so the
+    // static export can continue. You can improve this by providing a
+    // lightweight endpoint that returns only slugs.
+    console.error('generateStaticParams error:', err);
+    return [];
+  }
+}
 import BlogDetailClient from "./BlogDetailClient";
 import type { Metadata } from "next";
 
