@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build && next export",
-    "start": "next start",
+  "dev": "next dev",
+  "build": "next build",
+  "export": "next export",
+  "start": "next start",
     "lint": "next lint",
     "check-integration": "node scripts/check-integration.js"
   },
