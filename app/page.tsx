@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { SubscribeButton } from "@/components/auth/SubscribeButton";
 import { AuthRedirectHandler } from "@/components/auth/AuthRedirectHandler";
 import { ArrowRight, TrendingUp, Shield, Rocket, Eye, GraduationCap, Trophy, Users, BookOpen, Star, Lightbulb, DollarSign, ShieldCheck } from "lucide-react";
+import AchievementsGrid from "@/components/AchievementsGrid";
 
 function HomeContent() {
   return (
@@ -193,7 +194,7 @@ function HomeContent() {
                   {/* Circular Portrait */}
                   <div className="relative w-[260px] h-[260px] sm:w-[300px] sm:h-[300px] lg:w-[380px] lg:h-[380px] rounded-full overflow-hidden">
                     <img
-                      src="/asset/img/home_profile.jpg"
+                      src="/asset/img/home_profile.webp"
                       alt="Vishal Kumar"
                       className="w-full h-full object-cover"
                     />
@@ -217,131 +218,91 @@ function HomeContent() {
           </div>
         </section>
 
-{/* Mission / Content Focus Section */}
-<section className="bg-gray-50 dark:bg-gray-900 py-16 md:py-24">
-  <div className="container mx-auto px-4">
-    {/* Header */}
-    <div className="max-w-3xl mx-auto text-center space-y-6">
-      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-sm font-medium">
-        CONTENT FOCUS
-      </div>
-      <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-        Empowering You in the Crypto Space
-      </h2>
-      <p className="text-lg text-gray-600 dark:text-gray-400">
-        Vishal Techzone delivers clear, actionable insights for crypto enthusiasts and investors. Learn market analysis, altcoins, investment strategies, and emerging trends with real-world examples and expert guidance.
-      </p>
-    </div>
+        {/* Achievements Section (animated component) */}
+        <AchievementsGrid />
 
-    {/* Content Grid */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
-      
-      {/* Crypto Market Analysis */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-2xl transition-shadow duration-300">
-        <TrendingUp className="h-10 w-10 text-red-500 mb-4" />
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">
-          Crypto Market Analysis
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          In-depth analysis of price trends, market capitalization, emerging sectors, and key drivers of the crypto market.
-        </p>
-      </div>
-
-      {/* Cryptocurrency Fundamentals */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-2xl transition-shadow duration-300">
-        <BookOpen className="h-10 w-10 text-yellow-500 mb-4" />
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">
-          Cryptocurrency Fundamentals
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Learn the basics of crypto, blockchain, DeFi, and safe storage, trading, and management of cryptocurrencies.
-        </p>
-      </div>
-
-      {/* Altcoin Spotlights */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-2xl transition-shadow duration-300">
-        <Star className="h-10 w-10 text-purple-500 mb-4" />
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">
-          Altcoin Spotlights
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Discover high-potential altcoins, analyze their tech, team, and roadmap, and get insights on investment potential and risks.
-        </p>
-      </div>
-
-      {/* Crypto Investment Strategies */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-2xl transition-shadow duration-300">
-        <DollarSign className="h-10 w-10 text-green-500 mb-4" />
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">
-          Crypto Investment Strategies
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Learn portfolio diversification, dollar-cost averaging, long-term hodling, and risk management strategies for crypto investing.
-        </p>
-      </div>
-
-      {/* Industry Trends & Innovations */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-2xl transition-shadow duration-300">
-          <Lightbulb className="h-10 w-10 text-blue-500 mb-4" />
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">
-          Industry Trends & Innovations
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Explore NFTs, DeFi, L2 solutions, regulatory impacts, institutional adoption, and hear expert insights on crypto's future.
-        </p>
-      </div>
-      {/* Crypto Security & Best Practices */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-2xl transition-shadow duration-300">
-        <ShieldCheck className="h-10 w-10 text-teal-500 mb-4" />
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">
-          Crypto Security & Best Practices
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Learn how to secure your crypto assets, avoid scams, set up wallets safely, and follow best practices for trading and storing digital currencies.
-        </p>
-      </div>
-
-
-    </div>
-  </div>
-</section>
-
-
-        {/* Achievements Section */}
-        <section className="py-16 md:py-24">
+        {/* Mission / Content Focus Section */}
+        <section className="bg-gray-50 dark:bg-gray-900 py-16 md:py-24">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-              Key <span className="text-orange-600 dark:text-orange-400">Achievements</span>
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-                <Trophy className="h-10 w-10 text-orange-500 mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  Top 10 Crypto KOL
+            {/* Header */}
+            <div className="max-w-3xl mx-auto text-center space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-sm font-medium">
+                CONTENT FOCUS
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+                Empowering You in the Crypto Space
+              </h2>
+              <p className="text-lg text-gray-600 dark:text-gray-400">
+                Vishal Techzone delivers clear, actionable insights for crypto enthusiasts and investors. Learn market analysis, altcoins, investment strategies, and emerging trends with real-world examples and expert guidance.
+              </p>
+            </div>
+
+            {/* Content Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
+              
+              {/* Crypto Market Analysis */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                <TrendingUp className="h-10 w-10 text-red-500 mb-4" />
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">
+                  Crypto Market Analysis
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Ranked among the most influential voices in the Asian crypto
-                  market by leading analytics firms in 2023.
+                <p className="text-sm text-gray-600 dark:text-gray-400 hidden md:block">
+                  In-depth analysis of price trends, market capitalization, emerging sectors, and key drivers of the crypto market.
                 </p>
               </div>
-              <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-                <Users className="h-10 w-10 text-blue-500 mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  Largest Trading Community
+
+              {/* Cryptocurrency Fundamentals */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                <BookOpen className="h-10 w-10 text-yellow-500 mb-4" />
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">
+                  Cryptocurrency Fundamentals
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Built a discord and telegram community of over 50,000 active
-                  traders sharing real-time alpha.
+                <p className="text-sm text-gray-600 dark:text-gray-400 hidden md:block">
+                  Learn the basics of crypto, blockchain, DeFi, and safe storage, trading, and management of cryptocurrencies.
                 </p>
               </div>
-              <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-                <GraduationCap className="h-10 w-10 text-green-500 mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  Educated 1M+ Students
+
+              {/* Altcoin Spotlights */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                <Star className="h-10 w-10 text-purple-500 mb-4" />
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">
+                  Altcoin Spotlights
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Helped over a million people understand blockchain through
-                  free YouTube courses and premium masterclasses.
+                <p className="text-sm text-gray-600 dark:text-gray-400 hidden md:block">
+                  Discover high-potential altcoins, analyze their tech, team, and roadmap, and get insights on investment potential and risks.
+                </p>
+              </div>
+
+              {/* Crypto Investment Strategies */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                <DollarSign className="h-10 w-10 text-green-500 mb-4" />
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">
+                  Crypto Investment Strategies
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 hidden md:block">
+                  Learn portfolio diversification, dollar-cost averaging, long-term hodling, and risk management strategies for crypto investing.
+                </p>
+              </div>
+
+              {/* Industry Trends & Innovations */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                <Lightbulb className="h-10 w-10 text-blue-500 mb-4" />
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">
+                  Industry Trends & Innovations
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 hidden md:block">
+                  Explore NFTs, DeFi, L2 solutions, regulatory impacts, institutional adoption, and hear expert insights on crypto's future.
+                </p>
+              </div>
+
+              {/* Crypto Security & Best Practices */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                <ShieldCheck className="h-10 w-10 text-teal-500 mb-4" />
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">
+                  Crypto Security & Best Practices
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 hidden md:block">
+                  Learn how to secure your crypto assets, avoid scams, set up wallets safely, and follow best practices for trading and storing digital currencies.
                 </p>
               </div>
             </div>
@@ -349,7 +310,7 @@ function HomeContent() {
         </section>
 
         {/* Value Proposition Section */}
-        <section className="bg-gray-50 dark:bg-gray-900 py-16 md:py-24">
+        {/* <section className="bg-gray-50 dark:bg-gray-900 py-16 md:py-24">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center space-y-12">
               <div>

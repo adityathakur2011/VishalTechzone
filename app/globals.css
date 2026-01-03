@@ -68,3 +68,27 @@
   }
 }
 
+/* Small, reusable animations for the achievements cards */
+@layer utilities {
+  @keyframes float {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+    100% { transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    0% { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .fade-up {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: fadeUp 520ms ease forwards;
+  }
+}
+

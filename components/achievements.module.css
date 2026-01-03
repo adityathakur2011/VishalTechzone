@@ -1,0 +1,73 @@
+.section {
+  padding: 56px 12px;
+  background: transparent;
+}
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 12px;
+}
+.title {
+  font-size: 32px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 32px;
+  color: var(--card-foreground);
+}
+.orange { color: #f97316; }
+.grid { display:block; }
+.card {
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 6px 18px rgba(2,6,23,0.45);
+  padding: 18px;
+}
+.card:hover { transform: translateY(-6px); transition: transform 220ms ease; }
+.cardContent {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 160px;
+}
+.imageWrap { width: 140px; height: 140px; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 14px rgba(2,6,23,0.4); }
+.image { width: 100%; height: 100%; object-fit: cover; display: block; }
+.brandWrap { margin-top: 12px; }
+.brand { width: 64px; height: 64px; display: block; filter: none; }
+.rightCol { flex: 1; }
+.headerRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.heading { font-weight: 800; font-size: 20px; color: var(--card-foreground); }
+.year { background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: 14px; font-size: 13px; color: var(--muted-foreground); }
+.description { margin-top: 8px; color: var(--muted-foreground); line-height: 1.6; }
+.metaRow { margin-top: 14px; display:flex; align-items:center; gap: 12px; }
+.chip { background: #f97316; color: #fff; font-weight: 700; border-radius: 999px; padding: 6px 12px; font-size: 13px; }
+.highlight { color: var(--muted-foreground); font-size: 14px; }
+
+/* Responsive: single column on small screens, two columns on md/laptop */
+@media (max-width: 900px) {
+  .container { max-width: 720px; }
+  .cardContent { gap: 14px; }
+  .leftCol { width: 120px; }
+  .imageWrap { width: 96px; height: 96px; border-radius: 10px; }
+  .heading { font-size: 18px; }
+  .description { font-size: 14px; }
+  .metaRow { margin-top: 10px; }
+}
+
+@media (max-width: 480px) {
+  .container { padding: 0 8px; }
+  .cardContent { flex-direction: column; align-items: stretch; }
+  .leftCol { width: 100%; display:flex; flex-direction:row; gap:12px; align-items:center; }
+  .imageWrap { width: 88px; height: 88px; }
+  .brand { width: 42px; height: 42px; }
+  .heading { font-size: 17px; }
+  .description { font-size: 13px; }
+  .year { font-size: 12px; }
+}

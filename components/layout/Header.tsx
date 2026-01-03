@@ -1,12 +1,33 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { SubscribeButton } from "@/components/auth/SubscribeButton";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export const Header = () => {
+  const pathname = usePathname();
+
+  const normalizePath = (path: string) =>
+    path === "/" ? "/" : path.replace(/\/$/, "");
+
+  const isActive = (path: string) => {
+    const current = normalizePath(pathname);
+    const target = normalizePath(path);
+
+    if (target === "/") return current === "/";
+    return current === target || current.startsWith(`${target}/`);
+  };
+
+  const navLinkClass = (path: string) =>
+    `text-sm font-medium whitespace-nowrap transition-colors ${
+      isActive(path)
+        ? "text-orange-600 dark:text-orange-400"
+        : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+    }`;
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:bg-gray-950/95 dark:supports-[backdrop-filter]:bg-gray-950/60">
+    <header className="sticky top-0 z-40 w-full border-b bg-white/95 backdrop-blur dark:bg-gray-950/95">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -19,41 +40,15 @@ export const Header = () => {
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link
-              href="/"
-              className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-            >
-              Home
-            </Link>
-            {/* <Link
-              href="/about"
-              className="text-sm font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
-            >
-              About
-            </Link>
-            <Link
-              href="/crypto-gems"
-              className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-            >
-              Crypto Gems
-            </Link> */}
-            {/* <Link
-              href="/stock-picks"
-              className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-            >
-              Stock Picks
-            </Link> */}
-            <Link
-              href="/blog"
-              className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-            >
-              Blog
-            </Link>
+            <Link href="/" className={navLinkClass("/")}>Home</Link>
+            <Link href="/blog" className={navLinkClass("/blog")}>Blog</Link>
+            <Link href="/about" className={navLinkClass("/about")}>About</Link>
+            <Link href="/contact" className={navLinkClass("/contact")}>Contact Us</Link>
           </nav>
 
-          {/* Right side actions */}
+          {/* Actions */}
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <SubscribeButton size="sm" />
@@ -61,24 +56,15 @@ export const Header = () => {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
+      {/* Mobile Nav */}
       <nav className="md:hidden border-t px-4 py-2">
         <div className="flex items-center gap-4 overflow-x-auto">
-          <Link
-            href="/"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white whitespace-nowrap"
-          >
-            Home
-          </Link>
-          <Link
-            href="/blog"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white whitespace-nowrap"
-          >
-            Blog
-          </Link>
+          <Link href="/" className={navLinkClass("/")}>Home</Link>
+          <Link href="/blog" className={navLinkClass("/blog")}>Blog</Link>
+          <Link href="/about" className={navLinkClass("/about")}>About</Link>
+          <Link href="/contact" className={navLinkClass("/contact")}>Contact Us</Link>
         </div>
       </nav>
     </header>
   );
 };
-

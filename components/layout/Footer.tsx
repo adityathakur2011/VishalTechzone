@@ -209,7 +209,7 @@ export const Footer = () => {
         </div>
 
         <div className="mt-8 pt-8 border-t text-center text-sm text-gray-600 dark:text-gray-400">
-          <p>© {new Date().getFullYear()} Vishal Techzone. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Vishal Techzone. All rights reserved. Developed by Aditya Thakur.</p>
           <p className="mt-1">Disclaimer: Not financial advice.</p>
         </div>
       </div>
