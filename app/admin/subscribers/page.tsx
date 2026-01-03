@@ -27,15 +27,11 @@ export default function AdminSubscribersPage() {
   const fetchSubscribers = async () => {
     try {
       setLoading(true);
-      // TODO: Implement subscriber API endpoint
-      // const response = await apiClient("/api/v1/admin/subscribers");
-      // const data = await response.json();
-      // if (data.success) {
-      //   setSubscribers(data.data.subscribers || []);
-      // }
-      
-      // Mock data for now
-      setSubscribers([]);
+      const response = await apiClient("/api/v1/admin/subscribers");
+      const data = await response.json();
+      if (data.success) {
+        setSubscribers(data.data.subscribers || []);
+      }
     } catch (error) {
       console.error("Error fetching subscribers:", error);
     } finally {

@@ -6,18 +6,27 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Search, Filter } from "lucide-react";
 import Image from "next/image";
+import { extractYouTubeId } from "@/lib/mediaUtils";
 
 interface Blog {
   id: string;
   title: string;
   slug: string;
   excerpt: string | null;
-  featuredImage: string | null;
+  mediaType: "IMAGE" | "IMAGE_URL" | "YOUTUBE" | null;
+  mediaUrl: string | null;
   category: {
     id: string;
     name: string;
     slug: string;
   } | null;
+  tags: Array<{
+    tag: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+  }>;
   publishedAt: string | null;
   readTimeMinutes: number | null;
   views: number;
@@ -28,10 +37,28 @@ export default function BlogListingPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     fetchBlogs();
   }, [search, selectedCategory]);
+
+  const fetchCategories = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const response = await fetch(`${apiUrl}/api/v1/categories`);
+      const data = await response.json();
+      if (data.success) {
+        setCategories(data.data.categories || []);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
 
   const fetchBlogs = async () => {
     try {
@@ -83,10 +110,12 @@ export default function BlogListingPage() {
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
-              <option value="">All Categories</option>
-              <option value={1}>Crypto</option>
-              <option value={2}>Stocks</option>
-              <option value={3}>Tech</option>
+                <option value="">All Categories</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
               </select>
               <button className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
                 <Filter className="h-4 w-4" />
@@ -114,22 +143,65 @@ export default function BlogListingPage() {
                   href={`/blog/${blog.slug}`}
                   className="group bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-lg transition-shadow"
                 >
-                  {blog.featuredImage && (
+                  {/* Show media if available */}
+                  {(blog.mediaType === "IMAGE" || blog.mediaType === "IMAGE_URL") &&
+ blog.mediaUrl ? (
+  <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 overflow-hidden">
+    {blog.mediaUrl.startsWith("data:image/") ? (
+      <img
+        src={blog.mediaUrl}
+        alt={blog.title}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+        loading="lazy"
+      />
+    ) : (
+      <Image
+        src={blog.mediaUrl}
+        alt={blog.title}
+        fill
+        sizes="(max-width: 768px) 100vw, 50vw"
+        className="object-cover group-hover:scale-105 transition-transform"
+      />
+    )}
+  </div>
+
+                  ) : blog.mediaType === "YOUTUBE" && blog.mediaUrl ? (
                     <div className="relative aspect-video bg-gray-100 dark:bg-gray-800">
-                      <Image
-                        src={blog.featuredImage}
-                        alt={blog.title}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform"
-                      />
+                      {(() => {
+                        const videoId = extractYouTubeId(blog.mediaUrl);
+                        return videoId ? (
+                          <img
+                            src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+                            alt={blog.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            YouTube Video
+                          </div>
+                        );
+                      })()}
                     </div>
-                  )}
+                  ) : null}
                   <div className="p-6">
-                    {blog.category && (
-                      <span className="inline-block px-3 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-xs font-medium mb-3">
-                        {blog.category.name}
-                      </span>
-                    )}
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {blog.category && (
+                        <span className="inline-block px-3 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-xs font-medium">
+                          {blog.category.name}
+                        </span>
+                      )}
+                      {blog.tags && blog.tags.length > 0 && blog.tags.map((blogTag) => (
+                        <span
+                          key={blogTag.tag.id}
+                          className="inline-block px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-medium"
+                        >
+                          #{blogTag.tag.name}
+                        </span>
+                      ))}
+                    </div>
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                       {blog.title}
                     </h2>

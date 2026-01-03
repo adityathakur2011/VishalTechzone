@@ -1,15 +1,64 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SubscribeButton } from "@/components/auth/SubscribeButton";
 import { AuthRedirectHandler } from "@/components/auth/AuthRedirectHandler";
 import { ArrowRight, TrendingUp, Shield, Rocket, Eye, GraduationCap, Trophy, Users, BookOpen, Star, Lightbulb, DollarSign, ShieldCheck } from "lucide-react";
 import AchievementsGrid from "@/components/AchievementsGrid";
+import { extractYouTubeId } from "@/lib/mediaUtils";
+
+interface YouTubePost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  mediaUrl: string | null;
+  publishedAt: string | null;
+  views: number;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+}
 
 function HomeContent() {
+  const [latestVideos, setLatestVideos] = useState<YouTubePost[]>([]);
+  const [videosLoading, setVideosLoading] = useState(true);
+  const [showVideosSection, setShowVideosSection] = useState(false);
+
+  useEffect(() => {
+    fetchLatestYouTubePosts();
+  }, []);
+
+  const fetchLatestYouTubePosts = async () => {
+    try {
+      setVideosLoading(true);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const response = await fetch(`${apiUrl}/api/v1/blogs/youtube/latest?limit=3`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data.blogs && data.data.blogs.length > 0) {
+          setLatestVideos(data.data.blogs);
+          setShowVideosSection(true);
+        } else {
+          setShowVideosSection(false);
+        }
+      } else {
+        setShowVideosSection(false);
+      }
+    } catch (error) {
+      console.error("Error fetching latest YouTube posts:", error);
+      setShowVideosSection(false);
+    } finally {
+      setVideosLoading(false);
+    }
+  };
   return (
     <div className="flex min-h-screen flex-col bg-white dark:bg-gray-950">
       <Suspense fallback={null}>
@@ -357,71 +406,175 @@ function HomeContent() {
           </div>
         </section>
 
-        {/* Latest Analysis Section */}
-        <section className="py-16 md:py-24">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-                  Latest <span className="text-orange-600 dark:text-orange-400">Analysis</span>
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400 mt-2">
-                  Stay ahead of the market with my recent videos.
-                </p>
+        {/* Latest Analysis Section - Only show if API succeeds */}
+        {showVideosSection && !videosLoading && latestVideos.length > 0 && (
+          <section className="py-16 md:py-24">
+            <div className="container mx-auto px-4">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+                    Latest <span className="text-orange-600 dark:text-orange-400">Videos</span>
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-400 mt-2">
+                    Stay ahead of the market with my recent video analysis.
+                  </p>
+                </div>
+                <Link
+                  href="/blog"
+                  className="hidden md:flex items-center gap-2 text-orange-600 hover:text-orange-700 dark:text-orange-400 font-medium"
+                >
+                  View All <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
-              <Link
-                href="/blog"
-                className="hidden md:flex items-center gap-2 text-orange-600 hover:text-orange-700 dark:text-orange-400 font-medium"
-              >
-                Visit Channel <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 aspect-video bg-gray-100 dark:bg-gray-800">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-red-500 flex items-center justify-center">
-                      <svg className="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
+              
+              {/* Featured Video (Latest) */}
+              {latestVideos[0] && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                  <Link
+                    href={`/blog/${latestVideos[0].slug}`}
+                    className="group relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 aspect-video bg-gray-100 dark:bg-gray-800 hover:shadow-xl transition-all"
+                  >
+                    {(() => {
+                      const videoId = latestVideos[0].mediaUrl ? extractYouTubeId(latestVideos[0].mediaUrl) : null;
+                      return videoId ? (
+                        <>
+                          <img
+                            src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+                            alt={latestVideos[0].title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                            }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
+                            <div className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+                              <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-red-500 flex items-center justify-center">
+                              <svg className="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Video Preview</p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    <div className="absolute bottom-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-sm font-bold">
+                      YOUTUBE
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Video Preview</p>
+                  </Link>
+                  <div className="space-y-4 flex flex-col justify-center">
+                    {latestVideos[0].category && (
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400 text-sm font-medium w-fit">
+                        {latestVideos[0].category.name}
+                      </div>
+                    )}
+                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                      {latestVideos[0].title}
+                    </h3>
+                    {latestVideos[0].excerpt && (
+                      <p className="text-gray-600 dark:text-gray-400 text-lg">
+                        {latestVideos[0].excerpt}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                      {latestVideos[0].publishedAt && (
+                        <span>
+                          {new Date(latestVideos[0].publishedAt).toLocaleDateString()}
+                        </span>
+                      )}
+                      {/* {latestVideos[0].views > 0 && (
+                        <span>• {latestVideos[0].views.toLocaleString()} views</span>
+                      )} */}
+                    </div>
+                    <Link
+                      href={`/blog/${latestVideos[0].slug}`}
+                      className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 dark:text-orange-400 font-medium mt-4"
+                    >
+                      Watch Video <ArrowRight className="h-4 w-4" />
+                    </Link>
                   </div>
                 </div>
-                <div className="absolute bottom-4 left-4 bg-red-500 text-white px-3 py-1 rounded text-sm font-medium">
-                  YOUTUBE
+              )}
+
+              {/* More Videos Grid */}
+              {/* {latestVideos.length > 1 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {latestVideos.slice(1).map((video) => {
+                    const videoId = video.mediaUrl ? extractYouTubeId(video.mediaUrl) : null;
+                    return (
+                      <Link
+                        key={video.id}
+                        href={`/blog/${video.slug}`}
+                        className="group bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-lg transition-all hover:border-orange-500 dark:hover:border-orange-500"
+                      >
+                        <div className="relative aspect-video bg-gray-100 dark:bg-gray-800">
+                          {videoId ? (
+                            <>
+                              <img
+                                src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+                                alt={video.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                                }}
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
+                                <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center shadow-lg">
+                                  <svg className="w-6 h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                  </svg>
+                                </div>
+                              </div>
+                              <div className="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
+                                YT
+                              </div>
+                            </>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              YouTube Video
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          {video.category && (
+                            <span className="inline-block px-2 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-xs font-medium mb-2">
+                              {video.category.name}
+                            </span>
+                          )}
+                          <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-2">
+                            {video.title}
+                          </h4>
+                          {video.excerpt && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
+                              {video.excerpt}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            {video.publishedAt && (
+                              <span>{new Date(video.publishedAt).toLocaleDateString()}</span>
+                            )}
+                            {video.views > 0 && (
+                              <span>• {video.views.toLocaleString()} views</span>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
-              </div>
-              <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400 text-sm font-medium">
-                  LATEST ANALYSIS
-                </div>
-                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                  Is Bitcoin About to Hit $100K? Comprehensive Chart Analysis
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  In this video, we break down the Wyckoff accumulation pattern
-                  forming on the weekly timeframe and what the institutional
-                  order flow suggests for the next quarter.
-                </p>
-                <div className="flex gap-4">
-                  <Link
-                    href="#"
-                    className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 dark:text-orange-400 font-medium"
-                  >
-                    Watch on YouTube <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    href="/blog"
-                    className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white font-medium"
-                  >
-                    Read the Article <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              </div>
+              )} */}
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Newsletter CTA Section */}
         <section className="bg-gray-900 dark:bg-black py-16 md:py-24">

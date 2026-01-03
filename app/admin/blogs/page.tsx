@@ -13,6 +13,15 @@ interface Blog {
   status: string;
   publishedAt: string | null;
   views: number;
+  mediaType: "IMAGE" | "IMAGE_URL" | "YOUTUBE" | null;
+  mediaUrl: string | null;
+  tags: Array<{
+    tag: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+  }>;
 }
 
 export default function AdminBlogsPage() {
@@ -49,6 +58,29 @@ export default function AdminBlogsPage() {
       console.error("Error fetching blogs:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (blogId: string, blogTitle: string) => {
+    if (!confirm(`Are you sure you want to delete "${blogTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await apiClient(`/api/v1/admin/blogs/${blogId}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Refresh the blog list
+        fetchBlogs();
+      } else {
+        alert("Error deleting blog: " + (data.error?.message || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error deleting blog:", error);
+      alert("Failed to delete blog");
     }
   };
 
@@ -217,10 +249,16 @@ export default function AdminBlogsPage() {
                               <Eye className="h-4 w-4" />
                             </Link>
                           )}
-                          <button className="p-1 text-gray-600 hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400">
+                          <Link
+                            href={`/admin/blogs/${blog.id}/edit`}
+                            className="p-1 text-gray-600 hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400"
+                          >
                             <Edit className="h-4 w-4" />
-                          </button>
-                          <button className="p-1 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400">
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(blog.id, blog.title)}
+                            className="p-1 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                          >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>

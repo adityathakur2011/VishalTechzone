@@ -32,8 +32,8 @@ export const Header = () => {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-white font-bold text-lg">
-              V
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 text-white font-bold text-lg">
+              VT
             </div>
             <span className="font-bold text-lg text-gray-900 dark:text-white">
               Vishal Techzone

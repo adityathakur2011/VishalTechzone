@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Eye, Search } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { AdminProtection } from "@/components/admin/AdminProtection";
@@ -20,9 +20,12 @@ interface Tag {
   slug: string;
 }
 
-function CreateBlogPageContent() {
+function EditBlogPageContent() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const params = useParams();
+  const blogId = params.id as string;
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [mediaType, setMediaType] = useState<"IMAGE" | "IMAGE_URL" | "YOUTUBE" | null>(null);
@@ -42,7 +45,8 @@ function CreateBlogPageContent() {
   useEffect(() => {
     fetchCategories();
     fetchTags();
-  }, []);
+    fetchBlog();
+  }, [blogId]);
 
   const fetchCategories = async () => {
     try {
@@ -69,17 +73,47 @@ function CreateBlogPageContent() {
     }
   };
 
+  const fetchBlog = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient(`/api/v1/admin/blogs/${blogId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        const blog = data.data.blog;
+        setFormData({
+          title: blog.title || "",
+          content: blog.content || "",
+          excerpt: blog.excerpt || "",
+          categoryId: blog.categoryId || "",
+          seoTitle: blog.seoTitle || "",
+          seoDescription: blog.seoDescription || "",
+          publishedAt: blog.publishedAt ? new Date(blog.publishedAt).toISOString().slice(0, 16) : "",
+          publishImmediately: blog.status === "PUBLISHED",
+        });
+        setMediaType(blog.mediaType);
+        setMediaUrl(blog.mediaUrl);
+        setSelectedTagIds(blog.tags?.map((t: any) => t.tag.id) || []);
+      }
+    } catch (error) {
+      console.error("Error fetching blog:", error);
+      alert("Failed to load blog. Redirecting...");
+      router.push("/admin/blogs");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setLoading(true);
+      setSaving(true);
       
-      // Use mediaType and mediaUrl directly
       const finalMediaType = mediaType;
       const finalMediaUrl = mediaUrl;
 
-      const response = await apiClient("/api/v1/admin/blogs", {
-        method: "POST",
+      const response = await apiClient(`/api/v1/admin/blogs/${blogId}`, {
+        method: "PUT",
         body: JSON.stringify({
           ...formData,
           mediaType: finalMediaType,
@@ -93,25 +127,33 @@ function CreateBlogPageContent() {
       if (data.success) {
         router.push("/admin/blogs");
       } else {
-        alert("Error creating blog: " + (data.error?.message || "Unknown error"));
+        alert("Error updating blog: " + (data.error?.message || "Unknown error"));
       }
     } catch (error) {
-      console.error("Error creating blog:", error);
-      alert("Failed to create blog");
+      console.error("Error updating blog:", error);
+      alert("Failed to update blog");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-orange-500 border-r-transparent"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Create New Post
+            Edit Post
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Compose a new article for your subscribers.
+            Update your blog post content and settings.
           </p>
         </div>
         <div className="flex gap-3">
@@ -121,10 +163,10 @@ function CreateBlogPageContent() {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={saving}
             className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Publishing..." : "Publish Article"}
+            {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
@@ -152,7 +194,6 @@ function CreateBlogPageContent() {
             <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
               Content
             </label>
-            {/* Simple textarea - can be replaced with a rich text editor like TipTap or Quill */}
             <textarea
               required
               value={formData.content}
@@ -224,15 +265,7 @@ function CreateBlogPageContent() {
                   Status
                 </label>
                 <div className="px-3 py-2 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 rounded-lg text-sm font-medium">
-                  Draft
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-                  Visibility
-                </label>
-                <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm">
-                  Public
+                  {formData.publishImmediately ? "Published" : "Draft"}
                 </div>
               </div>
               <div className="flex items-center justify-between">
@@ -293,9 +326,6 @@ function CreateBlogPageContent() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-                  Tags
-                </label>
                 <MultiSelectTags
                   tags={tags}
                   selectedTagIds={selectedTagIds}
@@ -326,10 +356,10 @@ function CreateBlogPageContent() {
   );
 }
 
-export default function CreateBlogPage() {
+export default function EditBlogPage() {
   return (
     <AdminProtection>
-      <CreateBlogPageContent />
+      <EditBlogPageContent />
     </AdminProtection>
   );
 }

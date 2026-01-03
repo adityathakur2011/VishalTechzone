@@ -8,6 +8,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SubscribeButton } from "@/components/auth/SubscribeButton";
 import { ArrowLeft, Share2, Bookmark, Rocket } from "lucide-react";
+import { getYouTubeEmbedUrl, extractYouTubeId } from "@/lib/mediaUtils";
 
 interface Blog {
   id: string;
@@ -15,7 +16,8 @@ interface Blog {
   slug: string;
   content: string;
   excerpt: string | null;
-  featuredImage: string | null;
+  mediaType: "IMAGE" | "IMAGE_URL" | "YOUTUBE" | null;
+  mediaUrl: string | null;
   category: {
     id: string;
     name: string;
@@ -33,14 +35,41 @@ interface Blog {
   views: number;
 }
 
+interface RelatedBlog {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  mediaType: "IMAGE" | "IMAGE_URL" | "YOUTUBE" | null;
+  mediaUrl: string | null;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+  tags: Array<{
+    tag: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+  }>;
+  publishedAt: string | null;
+  views: number;
+}
+
 export default function BlogDetailClient() {
   const params = useParams();
   const [blog, setBlog] = useState<Blog | null>(null);
   const [loading, setLoading] = useState(true);
+  const [relatedBlogs, setRelatedBlogs] = useState<RelatedBlog[]>([]);
+  const [relatedLoading, setRelatedLoading] = useState(true);
+  const [showRelatedSection, setShowRelatedSection] = useState(false);
 
   useEffect(() => {
     if (params.slug) {
       fetchBlog(params.slug as string);
+      fetchRelatedBlogs(params.slug as string);
     }
   }, [params.slug]);
 
@@ -57,6 +86,31 @@ export default function BlogDetailClient() {
       console.error("Error fetching blog:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRelatedBlogs = async (slug: string) => {
+    try {
+      setRelatedLoading(true);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const response = await fetch(`${apiUrl}/api/v1/blogs/${slug}/related?limit=3`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data.blogs && data.data.blogs.length > 0) {
+          setRelatedBlogs(data.data.blogs);
+          setShowRelatedSection(true);
+        } else {
+          setShowRelatedSection(false);
+        }
+      } else {
+        setShowRelatedSection(false);
+      }
+    } catch (error) {
+      console.error("Error fetching related blogs:", error);
+      setShowRelatedSection(false);
+    } finally {
+      setRelatedLoading(false);
     }
   };
 
@@ -159,15 +213,36 @@ export default function BlogDetailClient() {
             </div>
           </div>
 
-          {/* Featured Image */}
-          {blog.featuredImage && (
-            <div className="relative aspect-video mb-8 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
-              <Image
-                src={blog.featuredImage}
-                alt={blog.title}
-                fill
-                className="object-cover"
+          {/* Media - YouTube Video or Image */}
+          {blog.mediaType === "YOUTUBE" && blog.mediaUrl && (
+            <div className="aspect-video mb-8 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+              <iframe
+                src={getYouTubeEmbedUrl(blog.mediaUrl)}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title={blog.title}
               />
+            </div>
+          )}
+          {(blog.mediaType === "IMAGE" || blog.mediaType === "IMAGE_URL") && blog.mediaUrl && (
+            <div className="relative aspect-video mb-8 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+              {blog.mediaUrl.startsWith("data:image/") ? (
+                // Use regular img tag for base64 data URLs
+                <img
+                  src={blog.mediaUrl}
+                  alt={blog.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                // Use Next.js Image for regular URLs
+                <Image
+                  src={blog.mediaUrl}
+                  alt={blog.title}
+                  fill
+                  className="object-cover"
+                />
+              )}
             </div>
           )}
 
@@ -178,7 +253,7 @@ export default function BlogDetailClient() {
           />
 
           {/* Inline CTA */}
-          <div className="my-12 p-6 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
+          {/* <div className="my-12 p-6 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
             <div className="flex items-center gap-2 mb-3">
               <Rocket className="h-5 w-5 text-orange-500" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -190,7 +265,7 @@ export default function BlogDetailClient() {
               and hidden gems.
             </p>
             <SubscribeButton />
-          </div>
+          </div> */}
 
           {/* Tags */}
           {blog.tags.length > 0 && (
@@ -206,8 +281,118 @@ export default function BlogDetailClient() {
             </div>
           )}
 
+          {/* Related Posts Section - Only show if API succeeds */}
+          {showRelatedSection && !relatedLoading && relatedBlogs.length > 0 && (
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-12 mb-12">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                {blog.mediaType === "YOUTUBE" 
+                  ? "More Videos You Might Like" 
+                  : "Related Posts"}
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {relatedBlogs.map((relatedBlog) => (
+                  <Link
+                    key={relatedBlog.id}
+                    href={`/blog/${relatedBlog.slug}`}
+                    className="group bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-lg transition-all hover:border-orange-500 dark:hover:border-orange-500"
+                  >
+                    {/* Media */}
+                    {relatedBlog.mediaType === "YOUTUBE" && relatedBlog.mediaUrl ? (
+                      <div className="relative aspect-video bg-gray-100 dark:bg-gray-800">
+                        {(() => {
+                          const videoId = extractYouTubeId(relatedBlog.mediaUrl);
+                          return videoId ? (
+                            <div className="relative">
+                              <img
+                                src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+                                alt={relatedBlog.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                                }}
+                              />
+                              {/* YouTube Play Icon Overlay */}
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
+                                <div className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-lg">
+                                  <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                  </svg>
+                                </div>
+                              </div>
+                              {/* YouTube Badge */}
+                              <div className="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
+                                YT
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              YouTube Video
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    ) : (relatedBlog.mediaType === "IMAGE" || relatedBlog.mediaType === "IMAGE_URL") && relatedBlog.mediaUrl ? (
+                      <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                        {relatedBlog.mediaUrl.startsWith("data:image/") ? (
+                          <img
+                            src={relatedBlog.mediaUrl}
+                            alt={relatedBlog.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                        ) : (
+                          <Image
+                            src={relatedBlog.mediaUrl}
+                            alt={relatedBlog.title}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform"
+                          />
+                        )}
+                      </div>
+                    ) : null}
+                    
+                    <div className="p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        {relatedBlog.category && (
+                          <span className="inline-block px-2 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-xs font-medium">
+                            {relatedBlog.category.name}
+                          </span>
+                        )}
+                        {relatedBlog.mediaType === "YOUTUBE" && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-xs font-medium">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                            </svg>
+                            Video
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-2">
+                        {relatedBlog.title}
+                      </h3>
+                      {relatedBlog.excerpt && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">
+                          {relatedBlog.excerpt}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                        {relatedBlog.publishedAt && (
+                          <span>
+                            {new Date(relatedBlog.publishedAt).toLocaleDateString()}
+                          </span>
+                        )}
+                        {relatedBlog.views > 0 && (
+                          <span>• {relatedBlog.views.toLocaleString()} views</span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Premium CTA */}
-          <div className="bg-gray-900 dark:bg-black rounded-lg p-8 md:p-12 text-center mb-12">
+          {/* <div className="bg-gray-900 dark:bg-black rounded-lg p-8 md:p-12 text-center mb-12">
             <div className="max-w-2xl mx-auto space-y-4">
               <div className="inline-block px-3 py-1 rounded-full bg-orange-500/20 text-orange-400 text-sm font-medium mb-4">
                 VISHALTECHZONE PREMIUM
@@ -233,7 +418,7 @@ export default function BlogDetailClient() {
                 No spam. Unsubscribe anytime.
               </p>
             </div>
-          </div>
+          </div> */}
 
           {/* Disclaimer */}
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
