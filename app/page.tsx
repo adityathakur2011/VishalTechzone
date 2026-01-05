@@ -69,7 +69,7 @@ function HomeContent() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-white dark:bg-gray-950">
-          <div className="container mx-auto px-4 py-12 md:py-20">
+          <div className="container mx-auto px-4 pt-4 pb-8 md:py-20">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               {/* Left Content */}
               <div className="space-y-6">

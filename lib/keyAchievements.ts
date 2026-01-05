@@ -11,7 +11,7 @@ export type KeyAchievement = {
 
 export const keyAchievements: KeyAchievement[] = [
   {
-  imagePath: "/asset/img/award_binance_trading.webp",
+  imagePath: "/asset/img/award_binance_year.webp",
   brandLogoPath: "/brands/binance.svg",
     title: "Outstanding Partner of the Year",
     subtitle: "Binance Affiliate Program",
@@ -22,7 +22,7 @@ export const keyAchievements: KeyAchievement[] = [
     highlight: "Highest Trading Volume – South Asia",
   },
   {
-  imagePath: "/asset/img/award_binance_year.webp",
+  imagePath: "/asset/img/award_binance_trading.webp",
   brandLogoPath: "/brands/binance.svg",
     title: "Affiliate Trading Challenge Winner",
     subtitle: "Binance Campus",
