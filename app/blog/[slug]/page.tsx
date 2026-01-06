@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       alternates: {
         canonical: url,
       },
-      authors: blog.author ? [{ name: blog.author }] : [{ name: "Vishal Tech" }],
+      authors: blog.author ? [{ name: blog.author }] : [{ name: "Vishal Techzone" }],
     } as Metadata;
   } catch (err) {
     console.error("generateMetadata error:", err);

@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+import "react-quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import { useRouter } from "next/navigation";
 import { Eye, Search } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
@@ -38,6 +41,31 @@ function CreateBlogPageContent() {
     publishedAt: "",
     publishImmediately: false,
   });
+
+  const quillModules = {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ["bold", "italic", "underline", "strike"],
+      ["blockquote", "code-block"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      ["link", "image"],
+      ["clean"],
+    ],
+  };
+
+  const quillFormats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "blockquote",
+    "code-block",
+    "list",
+    "bullet",
+    "link",
+    "image",
+  ];
 
   useEffect(() => {
     fetchCategories();
@@ -152,17 +180,127 @@ function CreateBlogPageContent() {
             <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
               Content
             </label>
-            {/* Simple textarea - can be replaced with a rich text editor like TipTap or Quill */}
-            <textarea
-              required
+            <style>{`
+              .ql-container {
+                font-size: 1rem;
+              }
+              .ql-editor {
+                min-height: 400px;
+                padding: 1.5rem;
+                line-height: 1.8;
+              }
+              .ql-editor h1 {
+                font-size: 2.5rem;
+                font-weight: 800;
+                line-height: 1.2;
+                margin-top: 2.5rem;
+                margin-bottom: 1.5rem;
+              }
+              .ql-editor h2 {
+                font-size: 2rem;
+                font-weight: 700;
+                line-height: 1.3;
+                margin-top: 2rem;
+                margin-bottom: 1.25rem;
+                padding-top: 0.5rem;
+                border-top: 1px solid #e5e7eb;
+              }
+              .ql-editor h3 {
+                font-size: 1.625rem;
+                font-weight: 600;
+                line-height: 1.4;
+                margin-top: 1.75rem;
+                margin-bottom: 1rem;
+              }
+              .ql-editor h4 {
+                font-size: 1.25rem;
+                font-weight: 600;
+                margin-top: 1.5rem;
+                margin-bottom: 0.875rem;
+              }
+              .ql-editor p {
+                margin-bottom: 1.5rem;
+                line-height: 1.8;
+                font-size: 1.0625rem;
+              }
+              .ql-editor ul, .ql-editor ol {
+                margin-left: 2rem;
+                margin-bottom: 1.5rem;
+              }
+              .ql-editor li {
+                margin-bottom: 0.75rem;
+                line-height: 1.8;
+              }
+              .ql-editor blockquote {
+                border-left: 5px solid #f97316;
+                padding: 1rem 0 1rem 1.5rem;
+                margin: 1.5rem 0;
+                background-color: #fef3c7;
+                font-style: italic;
+                font-size: 1.0625rem;
+              }
+              .ql-editor code {
+                background-color: #f3f4f6;
+                color: #dc2626;
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.375rem;
+                font-family: 'Courier New', monospace;
+              }
+              .ql-editor pre {
+                background-color: #1f2937;
+                color: #e5e7eb;
+                padding: 1.5rem;
+                border-radius: 0.5rem;
+                font-family: 'Courier New', monospace;
+                margin-bottom: 1.5rem;
+              }
+              .ql-editor pre code {
+                background-color: transparent;
+                color: #e5e7eb;
+                padding: 0;
+              }
+              .dark .ql-editor {
+                background-color: #1f2937;
+                color: #e5e7eb;
+              }
+              .dark .ql-editor h1, .dark .ql-editor h2, .dark .ql-editor h3, .dark .ql-editor h4 {
+                color: #f3f4f6;
+              }
+              .dark .ql-editor h2 {
+                border-top-color: #374151;
+              }
+              .dark .ql-editor blockquote {
+                background-color: #78350f;
+                color: #fcd34d;
+              }
+              .dark .ql-editor code {
+                background-color: #1f2937;
+                color: #fca5a5;
+              }
+              .ql-toolbar {
+                border-top: none;
+                border-left: none;
+                border-right: none;
+                background-color: #f9fafb;
+              }
+              .dark .ql-toolbar {
+                background-color: #111827;
+                border-color: #374151;
+              }
+              .dark .ql-toolbar.ql-snow {
+                border-color: #374151;
+              }
+            `}</style>
+            {/* React Quill WYSIWYG editor */}
+            <ReactQuill
+              theme="snow"
               value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              placeholder="Start writing your amazing content here..."
-              rows={20}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono text-sm"
+              onChange={(value: string) => setFormData({ ...formData, content: value })}
+              modules={quillModules}
+              formats={quillFormats}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              HTML is supported. For rich text editing, integrate a WYSIWYG editor.
+              Preview matches your published blog styling.
             </p>
           </div>
 

@@ -65,11 +65,18 @@ export default function BlogDetailClient() {
   const [relatedBlogs, setRelatedBlogs] = useState<RelatedBlog[]>([]);
   const [relatedLoading, setRelatedLoading] = useState(true);
   const [showRelatedSection, setShowRelatedSection] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [shareMessage, setShareMessage] = useState("");
 
   useEffect(() => {
     if (params.slug) {
       fetchBlog(params.slug as string);
       fetchRelatedBlogs(params.slug as string);
+      // Check if blog is bookmarked
+      const bookmarks = JSON.parse(localStorage.getItem("bookmarkedBlogs") || "[]");
+      if (bookmarks.includes(params.slug)) {
+        setIsBookmarked(true);
+      }
     }
   }, [params.slug]);
 
@@ -111,6 +118,54 @@ export default function BlogDetailClient() {
       setShowRelatedSection(false);
     } finally {
       setRelatedLoading(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!blog) return;
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    const text = `Check out: ${blog.title}`;
+
+    // Try Web Share API first (mobile-friendly)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: blog.title,
+          text: text,
+          url: url,
+        });
+      } catch (err) {
+        console.error("Share failed:", err);
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(url);
+        setShareMessage("Link copied to clipboard!");
+        setTimeout(() => setShareMessage(""), 2000);
+      } catch (err) {
+        console.error("Copy failed:", err);
+      }
+    }
+  };
+
+  const handleBookmark = () => {
+    if (!blog) return;
+    const bookmarks = JSON.parse(localStorage.getItem("bookmarkedBlogs") || "[]");
+    const slug = blog.slug;
+
+    if (isBookmarked) {
+      // Remove bookmark
+      const updated = bookmarks.filter((b: string) => b !== slug);
+      localStorage.setItem("bookmarkedBlogs", JSON.stringify(updated));
+      setIsBookmarked(false);
+    } else {
+      // Add bookmark
+      if (!bookmarks.includes(slug)) {
+        bookmarks.push(slug);
+      }
+      localStorage.setItem("bookmarkedBlogs", JSON.stringify(bookmarks));
+      setIsBookmarked(true);
     }
   };
 
@@ -186,11 +241,11 @@ export default function BlogDetailClient() {
           <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold">
-                V
+                VT
               </div>
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">
-                  Vishal Tech
+                  Vishal Techzone
                 </p>
                 {blog.publishedAt && (
                   <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -204,11 +259,28 @@ export default function BlogDetailClient() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+              <button 
+                onClick={handleShare}
+                className="p-2 text-gray-600 hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400 transition-colors relative"
+                title="Share this post"
+              >
                 <Share2 className="h-5 w-5" />
               </button>
-              <button className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
-                <Bookmark className="h-5 w-5" />
+              {shareMessage && (
+                <span className="text-xs text-green-600 dark:text-green-400 absolute -bottom-6">
+                  {shareMessage}
+                </span>
+              )}
+              <button 
+                onClick={handleBookmark}
+                className={`p-2 transition-colors ${
+                  isBookmarked 
+                    ? "text-orange-600 dark:text-orange-400" 
+                    : "text-gray-600 hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400"
+                }`}
+                title={isBookmarked ? "Remove bookmark" : "Bookmark this post"}
+              >
+                <Bookmark className={`h-5 w-5 ${isBookmarked ? "fill-current" : ""}`} />
               </button>
             </div>
           </div>
@@ -247,8 +319,219 @@ export default function BlogDetailClient() {
           )}
 
           {/* Content */}
+          <style>{`
+            .blog-content {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+              line-height: 1.8;
+            }
+            .blog-content > * {
+              margin-bottom: 1.5rem;
+            }
+            .blog-content h1 {
+              font-size: 2.5rem;
+              font-weight: 800;
+              line-height: 1.2;
+              margin-top: 2.5rem;
+              margin-bottom: 1.5rem;
+              color: #111827;
+              letter-spacing: -0.02em;
+            }
+            .dark .blog-content h1 {
+              color: #f3f4f6;
+            }
+            .blog-content h2 {
+              font-size: 2rem;
+              font-weight: 700;
+              line-height: 1.3;
+              margin-top: 2rem;
+              margin-bottom: 1.25rem;
+              color: #1f2937;
+              padding-top: 0.5rem;
+              border-top: 1px solid #e5e7eb;
+            }
+            .dark .blog-content h2 {
+              color: #e5e7eb;
+              border-top-color: #374151;
+            }
+            .blog-content h3 {
+              font-size: 1.625rem;
+              font-weight: 600;
+              line-height: 1.4;
+              margin-top: 1.75rem;
+              margin-bottom: 1rem;
+              color: #374151;
+            }
+            .dark .blog-content h3 {
+              color: #d1d5db;
+            }
+            .blog-content h4 {
+              font-size: 1.25rem;
+              font-weight: 600;
+              margin-top: 1.5rem;
+              margin-bottom: 0.875rem;
+              color: #374151;
+            }
+            .dark .blog-content h4 {
+              color: #d1d5db;
+            }
+            .blog-content p {
+              margin-bottom: 1.5rem;
+              line-height: 1.8;
+              color: #374151;
+              font-size: 1.0625rem;
+            }
+            .dark .blog-content p {
+              color: #d1d5db;
+            }
+            .blog-content ul {
+              list-style-type: disc;
+              margin-left: 2rem;
+              margin-bottom: 1.5rem;
+              padding-left: 0;
+            }
+            .blog-content ol {
+              list-style-type: decimal;
+              margin-left: 2rem;
+              margin-bottom: 1.5rem;
+              padding-left: 0;
+            }
+            .blog-content li {
+              margin-bottom: 0.75rem;
+              color: #374151;
+              line-height: 1.8;
+            }
+            .dark .blog-content li {
+              color: #d1d5db;
+            }
+            .blog-content li > p {
+              margin-bottom: 0;
+              display: inline;
+            }
+            .blog-content strong, .blog-content b {
+              font-weight: 700;
+              color: #111827;
+            }
+            .dark .blog-content strong, .dark .blog-content b {
+              color: #f3f4f6;
+            }
+            .blog-content em, .blog-content i {
+              font-style: italic;
+              color: #374151;
+            }
+            .dark .blog-content em, .dark .blog-content i {
+              color: #d1d5db;
+            }
+            .blog-content code {
+              background-color: #f3f4f6;
+              color: #dc2626;
+              padding: 0.25rem 0.5rem;
+              border-radius: 0.375rem;
+              font-family: 'Courier New', 'Courier', monospace;
+              font-size: 0.95em;
+            }
+            .dark .blog-content code {
+              background-color: #1f2937;
+              color: #fca5a5;
+            }
+            .blog-content pre {
+              background-color: #1f2937;
+              color: #e5e7eb;
+              padding: 1.5rem;
+              border-radius: 0.5rem;
+              overflow-x: auto;
+              margin-bottom: 1.5rem;
+              border: 1px solid #374151;
+              font-family: 'Courier New', 'Courier', monospace;
+              font-size: 0.95rem;
+              line-height: 1.6;
+            }
+            .blog-content pre code {
+              background-color: transparent;
+              color: #e5e7eb;
+              padding: 0;
+              border-radius: 0;
+            }
+            .blog-content blockquote {
+              border-left: 5px solid #f97316;
+              padding: 1rem 0 1rem 1.5rem;
+              margin-left: 0;
+              margin-right: 0;
+              margin-bottom: 1.5rem;
+              background-color: #fef3c7;
+              color: #92400e;
+              font-style: italic;
+              font-size: 1.0625rem;
+            }
+            .dark .blog-content blockquote {
+              background-color: #78350f;
+              color: #fcd34d;
+            }
+            .blog-content a {
+              color: #ea580c;
+              text-decoration: none;
+              border-bottom: 2px solid #fed7aa;
+              transition: all 0.3s ease;
+            }
+            .blog-content a:hover {
+              color: #c2410c;
+              border-bottom-color: #fdba74;
+            }
+            .dark .blog-content a {
+              color: #fb923c;
+            }
+            .dark .blog-content a:hover {
+              color: #fbbf24;
+            }
+            .blog-content img {
+              max-width: 100%;
+              height: auto;
+              margin: 2rem 0;
+              border-radius: 0.5rem;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .dark .blog-content img {
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            }
+            .blog-content table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 1.5rem 0;
+              font-size: 0.95rem;
+            }
+            .blog-content th {
+              background-color: #f3f4f6;
+              color: #111827;
+              padding: 0.75rem;
+              text-align: left;
+              font-weight: 600;
+              border: 1px solid #e5e7eb;
+            }
+            .dark .blog-content th {
+              background-color: #374151;
+              color: #f3f4f6;
+              border-color: #4b5563;
+            }
+            .blog-content td {
+              padding: 0.75rem;
+              border: 1px solid #e5e7eb;
+              color: #374151;
+            }
+            .dark .blog-content td {
+              color: #d1d5db;
+              border-color: #4b5563;
+            }
+            .blog-content hr {
+              border: none;
+              height: 1px;
+              background-color: #e5e7eb;
+              margin: 2rem 0;
+            }
+            .dark .blog-content hr {
+              background-color: #374151;
+            }
+          `}</style>
           <div
-            className="prose prose-lg dark:prose-invert max-w-none mb-8"
+            className="blog-content max-w-none mb-8"
             dangerouslySetInnerHTML={{ __html: blog.content }}
           />
 

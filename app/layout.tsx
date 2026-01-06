@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     "analysis",
     "finance",
   ],
-  authors: [{ name: "Vishal Tech" }],
+  authors: [{ name: "Vishal Techzone" }],
   themeColor: [{ media: "(prefers-color-scheme: light)", color: "#ffffff" }, { media: "(prefers-color-scheme: dark)", color: "#111827" }],
   openGraph: {
     title: "Vishal Techzone",
