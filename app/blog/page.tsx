@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -38,14 +38,75 @@ export default function BlogListingPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [observedElement, setObservedElement] = useState<HTMLDivElement | null>(null);
+  const [loadingBlogId, setLoadingBlogId] = useState<string | null>(null);
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
+    if (hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
+
     fetchCategories();
+    // Try to load preloaded blogs from session storage
+    const preloaded = sessionStorage.getItem('preloadedBlogs');
+    let isCacheValid = false;
+
+    if (preloaded) {
+      try {
+        const data = JSON.parse(preloaded);
+        // Check if cache is still valid (not expired)
+        const now = Date.now();
+        const cacheAge = now - data.cachedAt;
+        const cacheExpiry = data.cacheExpiry || 5 * 60 * 1000; // Default 5 minutes
+        
+        if (cacheAge < cacheExpiry && data.blogs && data.blogs.length > 0) {
+          setBlogs(data.blogs || []);
+          setTotalPages(data.pagination?.totalPages || 1);
+          setLoading(false);
+          isCacheValid = true;
+          console.log(`Using cached blogs (${Math.round(cacheAge / 1000)}s old)`);
+        }
+      } catch (error) {
+        console.error("Error parsing preloaded blogs:", error);
+      }
+    }
+
+    // If cache doesn't exist or is expired, fetch fresh data
+    if (!isCacheValid) {
+      console.log('Cache expired or not found, fetching fresh data');
+      fetchBlogs(1, true);
+    }
   }, []);
 
   useEffect(() => {
-    fetchBlogs();
+    // Only reset and refetch if search or category actually changed
+    if (search || selectedCategory) {
+      setPage(1);
+      setBlogs([]);
+      setTotalPages(1);
+      fetchBlogs(1, true);
+    }
   }, [search, selectedCategory]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    if (!observedElement) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && page < totalPages && !isLoadingMore && !loading) {
+          fetchBlogs(page + 1, false);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(observedElement);
+    return () => observer.disconnect();
+  }, [observedElement, page, totalPages, isLoadingMore, loading]);
 
   const fetchCategories = async () => {
     try {
@@ -60,10 +121,17 @@ export default function BlogListingPage() {
     }
   };
 
-  const fetchBlogs = async () => {
+  const fetchBlogs = async (pageNum: number, isFirstPage: boolean) => {
     try {
-      setLoading(true);
+      if (isFirstPage) {
+        setLoading(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+
       const params = new URLSearchParams();
+      params.append("page", pageNum.toString());
+      params.append("limit", "10");
       if (search) params.append("search", search);
       if (selectedCategory) params.append("categoryId", selectedCategory);
 
@@ -73,13 +141,30 @@ export default function BlogListingPage() {
       );
       const data = await response.json();
       if (data.success) {
-        setBlogs(data.data.blogs || []);
+        const newBlogs = data.data.blogs || [];
+        setTotalPages(data.data.pagination?.totalPages || 1);
+        
+        if (isFirstPage) {
+          setBlogs(newBlogs);
+        } else {
+          setBlogs((prevBlogs) => [...prevBlogs, ...newBlogs]);
+        }
+        
+        setPage(pageNum);
       }
     } catch (error) {
       console.error("Error fetching blogs:", error);
     } finally {
-      setLoading(false);
+      if (isFirstPage) {
+        setLoading(false);
+      } else {
+        setIsLoadingMore(false);
+      }
     }
+  };
+
+  const handleBlogClick = (blogId: string) => {
+    setLoadingBlogId(blogId);
   };
 
   return (
@@ -88,7 +173,7 @@ export default function BlogListingPage() {
 
       <main className="flex-1">
         <div className="container mx-auto px-4 py-8 md:py-12">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             Blog
           </h1>
 
@@ -136,13 +221,27 @@ export default function BlogListingPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {blogs.map((blog) => (
-                <Link
-                  key={blog.id}
-                  href={`/blog/${blog.slug}`}
-                  className="group bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-lg transition-shadow"
-                >
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {blogs.map((blog, index) => (
+                  <div
+                    key={blog.id}
+                    ref={index === blogs.length - 1 ? setObservedElement : null}
+                  >
+                    <Link
+                      href={`/blog/${blog.slug}`}
+                      onClick={() => handleBlogClick(blog.id)}
+                      className="group bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-lg transition-shadow block h-full relative"
+                    >
+                      {/* Loading Overlay */}
+                      {loadingBlogId === blog.id && (
+                        <div className="absolute inset-0 bg-black/40 dark:bg-black/60 flex items-center justify-center rounded-lg z-50 backdrop-blur-sm">
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-orange-500 border-r-transparent"></div>
+                            <p className="text-white text-sm font-medium">Loading...</p>
+                          </div>
+                        </div>
+                      )}
                   {/* Show media if available */}
                   {(blog.mediaType === "IMAGE" || blog.mediaType === "IMAGE_URL") &&
  blog.mediaUrl ? (
@@ -210,7 +309,7 @@ export default function BlogListingPage() {
                         {blog.excerpt}
                       </p>
                     )}
-                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
                       {blog.publishedAt && (
                         <span>
                           {new Date(blog.publishedAt).toLocaleDateString()}
@@ -219,12 +318,22 @@ export default function BlogListingPage() {
                       {blog.readTimeMinutes && (
                         <span>{blog.readTimeMinutes} min read</span>
                       )}
-                      <span>{blog.views.toLocaleString()} views</span>
+                      {/* <span>{blog.views.toLocaleString()} views</span> */}
                     </div>
                   </div>
-                </Link>
-              ))}
-            </div>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+
+              {/* Loading More Indicator */}
+              {isLoadingMore && (
+                <div className="text-center py-8">
+                  <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-orange-500 border-r-transparent"></div>
+                  <p className="text-gray-600 dark:text-gray-400 mt-2">Loading more blogs...</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>

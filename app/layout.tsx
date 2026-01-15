@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -9,6 +9,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Vishal Techzone",
   description: "Official website and content platform for Vishal Techzone",
+  metadataBase: new URL("https://vishaltechzone.com"),
   keywords: [
     "vishaltechzone",
     "crypto",
@@ -19,7 +20,6 @@ export const metadata: Metadata = {
     "finance",
   ],
   authors: [{ name: "Vishal Techzone" }],
-  themeColor: [{ media: "(prefers-color-scheme: light)", color: "#ffffff" }, { media: "(prefers-color-scheme: dark)", color: "#111827" }],
   openGraph: {
     title: "Vishal Techzone",
     description: "Official website and content platform for Vishal Techzone",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     siteName: "Vishal Techzone",
     images: [
       {
-        url: "https://vishaltechzone.com/asset/img/home_profile.webp",
+        url: "/asset/img/home_profile.webp",
         width: 1200,
         height: 630,
         alt: "Vishal Techzone",
@@ -46,6 +46,13 @@ export const metadata: Metadata = {
     icon: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#111827" },
+  ],
 };
 
 export default function RootLayout({

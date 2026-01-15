@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Header } from "@/components/layout/Header";
@@ -30,9 +30,14 @@ function HomeContent() {
   const [latestVideos, setLatestVideos] = useState<YouTubePost[]>([]);
   const [videosLoading, setVideosLoading] = useState(true);
   const [showVideosSection, setShowVideosSection] = useState(false);
+  const hasPreloadedRef = useRef(false);
 
   useEffect(() => {
     fetchLatestYouTubePosts();
+    if (!hasPreloadedRef.current) {
+      preloadBlogs();
+      hasPreloadedRef.current = true;
+    }
   }, []);
 
   const fetchLatestYouTubePosts = async () => {
@@ -57,6 +62,29 @@ function HomeContent() {
       setShowVideosSection(false);
     } finally {
       setVideosLoading(false);
+    }
+  };
+
+  const preloadBlogs = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const response = await fetch(`${apiUrl}/api/v1/blogs?page=1&limit=10`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Store in sessionStorage with timestamp for cache expiration (5 minutes)
+          const cacheData = {
+            ...data.data,
+            cachedAt: Date.now(),
+            cacheExpiry: 5 * 60 * 1000, // 5 minutes in milliseconds
+          };
+          sessionStorage.setItem('preloadedBlogs', JSON.stringify(cacheData));
+          console.log('Blogs preloaded successfully');
+        }
+      }
+    } catch (error) {
+      console.error("Error preloading blogs:", error);
     }
   };
   return (
@@ -90,28 +118,30 @@ function HomeContent() {
                 </p>
 
                 {/* Metrics Cards */}
-                <div className="grid grid-cols-3 gap-4 pt-4">
-                  <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-4">
+                  <div className="bg-white dark:bg-gray-900 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-800 text-center">
+                    <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
                       250K+
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                    <div className="text-[11px] sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
                       Subscribers
                     </div>
                   </div>
-                  <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+
+                  <div className="bg-white dark:bg-gray-900 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-800 text-center">
+                    <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
                       20M+
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                    <div className="text-[11px] sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
                       Total Views
                     </div>
                   </div>
-                  <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+
+                  <div className="bg-white dark:bg-gray-900 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-800 text-center">
+                    <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
                       4.8/5
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                    <div className="text-[11px] sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
                       Community Rating
                     </div>
                   </div>
@@ -577,7 +607,7 @@ function HomeContent() {
         )}
 
         {/* Newsletter CTA Section */}
-        <section className="bg-gray-900 dark:bg-black py-16 md:py-24">
+        {/* <section className="bg-gray-900 dark:bg-black py-16 md:py-24">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto text-center space-y-6">
               <h2 className="text-3xl md:text-4xl font-bold text-white">
@@ -602,7 +632,7 @@ function HomeContent() {
               </p>
             </div>
           </div>
-        </section>
+        </section> */}
       </main>
 
       <Footer />
