@@ -106,7 +106,8 @@ function CreateBlogPageContent() {
 
     try {
       setAiEnhanceLoading(true);
-      const response = await fetch("http://98.93.104.207/api/workflow-execution/run", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const response = await fetch(`${apiUrl}/api/workflow-execution/run`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
