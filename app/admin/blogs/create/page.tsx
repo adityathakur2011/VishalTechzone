@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import { useRouter } from "next/navigation";
-import { Eye, Search } from "lucide-react";
+import { Eye, Search, Wand2 } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { AdminProtection } from "@/components/admin/AdminProtection";
 import { MediaInput } from "@/components/ui/MediaInput";
@@ -26,6 +26,7 @@ interface Tag {
 function CreateBlogPageContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [aiEnhanceLoading, setAiEnhanceLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [mediaType, setMediaType] = useState<"IMAGE" | "IMAGE_URL" | "YOUTUBE" | null>(null);
@@ -94,6 +95,77 @@ function CreateBlogPageContent() {
       }
     } catch (error) {
       console.error("Error fetching tags:", error);
+    }
+  };
+
+  const handleAiEnhance = async () => {
+    if (!formData.content.trim()) {
+      alert("Please write some content first before enhancing");
+      return;
+    }
+
+    try {
+      setAiEnhanceLoading(true);
+      const response = await fetch("http://98.93.104.207/api/workflow-execution/run", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          workflow_name: "SEO Blog Generation Workflow v1",
+          input: {
+            blog: [
+              {
+                id: 1,
+                input: formData.content,
+              },
+            ],
+          },
+        }),
+      });
+
+      const data = await response.json();
+      if (data.message === "Workflow executed successfully" && data.result?.executionLog) {
+        // Find the BlogContentGeneratorAgent entry in executionLog
+        const blogContentEntry = data.result.executionLog.find(
+          (log: any) => log.step?.name === "BlogContentGeneratorAgent"
+        );
+
+        if (blogContentEntry?.detail?.output?.generatedContent) {
+          try {
+            // Parse the generatedContent which is a JSON string
+            const parsedContent = JSON.parse(blogContentEntry.detail.output.generatedContent);
+            const htmlContent = parsedContent[0]?.content;
+            const generatedTitle = parsedContent[0]?.title;
+            const metaDescription = parsedContent[0]?.meta_description;
+            const keywords = parsedContent[0]?.keywords;
+
+            if (htmlContent) {
+              setFormData({
+                ...formData,
+                title: generatedTitle || formData.title,
+                seoTitle: generatedTitle || formData.seoTitle,
+                content: htmlContent,
+                seoDescription: metaDescription || formData.seoDescription,
+              });
+            } else {
+              alert("No content found in the enhanced response");
+            }
+          } catch (parseError) {
+            console.error("Error parsing generated content:", parseError);
+            alert("Failed to parse enhanced content");
+          }
+        } else {
+          alert("No enhanced content received from API");
+        }
+      } else {
+        alert("Error enhancing content: " + (data.message || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error enhancing content:", error);
+      alert("Failed to enhance content");
+    } finally {
+      setAiEnhanceLoading(false);
     }
   };
 
@@ -177,9 +249,20 @@ function CreateBlogPageContent() {
 
           {/* Rich Text Editor */}
           <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
-            <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-              Content
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white">
+                Content
+              </label>
+              <button
+                type="button"
+                onClick={handleAiEnhance}
+                disabled={aiEnhanceLoading}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Wand2 className="h-3.5 w-3.5" />
+                {aiEnhanceLoading ? "Enhancing..." : "Agent Hub Enhance"}
+              </button>
+            </div>
             <style>{`
               .ql-container {
                 font-size: 1rem;
